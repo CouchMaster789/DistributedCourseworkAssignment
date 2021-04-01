@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+
+    <link href="{{ url_for("static", filename="styles.css") }}" rel="stylesheet">
+
+    <title>Matrix Calculator</title>
+</head>
+<body>
+
+<div class="container pt-4">
+    <section class="text-center">
+        <h1>Matrix Calculator</h1>
+        <h4 class="text-muted">Distributed Systems (ECS656U)</h4>
+
+        <div class="alert alert-info mt-5 mx-auto">
+            Please note that this calculator only supports matrix multiplication
+        </div>
+    </section>
+
+    <section class="mt-5 text-center">
+        <div class="row">
+            <div class="col mb-3">
+                <label for="input_file_1" class="form-label fw-bold">File 1</label>
+                <input class="form-control" type="file" id="input_file_1" onchange="load_matrix(1)" required>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+                <div class="invalid-feedback" id="input_1_invalid_feedback">
+                    Missing file! Please select a matrix file to multiply.
+                </div>
+
+                <table class="table table-bordered w-auto mx-auto mt-4 fw-bold">
+                    <tbody>
+                    {% for _ in range(4) %}
+                        <tr>
+                            {% for _ in range(4) %}
+                                <td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">1</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col mb-3">
+                <label for="input_file_2" class="form-label fw-bold">File 2</label>
+                <input class="form-control" type="file" id="input_file_2" onchange="load_matrix(2)" required>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+                <div class="invalid-feedback" id="input_2_invalid_feedback">
+                    Missing file! Please select a matrix file to multiply.
+                </div>
+
+                <table class="table table-bordered w-auto mx-auto mt-4 fw-bold">
+                    <tbody>
+                    {% for _ in range(4) %}
+                        <tr>
+                            {% for _ in range(4) %}
+                                <td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">52</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="text-center mt-4">
+        <button class="btn btn-primary btn-lg fw-bold fs-3" onclick="calculate_matrix_multiplication()">
+            Calculate
+        </button>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+        crossorigin="anonymous"></script>
+
+<script>
+    let matrix_1 = [];
+    let matrix_2 = [];
+
+    function load_matrix(matrix_num) {
+        let input_1 = document.querySelector("#input_file_1");
+        let input_2 = document.querySelector("#input_file_2");
+        let matrix;
+
+        if (matrix_num === 1) {
+            console.log(input_1);
+            matrix = matrix_1;
+        } else {
+            console.log(input_2);
+            matrix = matrix_2;
+        }
+
+    }
+
+    function calculate_matrix_multiplication() {
+        let input_1 = document.querySelector("#input_file_1");
+        let input_2 = document.querySelector("#input_file_2");
+
+        if (matrix_1.length === 0) {
+            input_1.parentElement.querySelector("#input_1_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
+            input_1.classList.remove("is-valid")
+            input_1.classList.add("is-invalid")
+
+            input_2.parentElement.querySelector("#input_2_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
+            input_2.classList.remove("is-valid")
+            input_2.classList.add("is-invalid")
+        }
+
+    }
+</script>
+</body>
+</html>
