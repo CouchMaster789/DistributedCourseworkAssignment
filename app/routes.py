@@ -17,7 +17,13 @@ def multiply():
     if not (matrix_1 or matrix_2):
         return jsonify({"msg": "At least one matrix is missing, two matrices are required for multiplication."}), 400
 
-    print("matrix 1:", matrix_1)
-    print("matrix 2:", matrix_2)
+    matrix_1 = [[int(item) for item in row.split(",")] for row in matrix_1.split(";")]
+    matrix_2 = [[int(item) for item in row.split(",")] for row in matrix_2.split(";")]
+    matrix_result = [[0 for _ in range(len(row))] for row in matrix_1]
 
-    return jsonify({"result": matrix_1}), 200
+    for i in range(len(matrix_1)):
+        for j in range(len(matrix_2[0])):
+            for k in range(len(matrix_2)):
+                matrix_result[i][j] += matrix_1[i][k] * matrix_2[k][j]
+
+    return jsonify({"result": ";".join([",".join([str(item) for item in row]) for row in matrix_result])}), 200
