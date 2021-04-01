@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option objc_class_prefix = "HLW";
+
+package matrix_computations;
+
+service Computer {
+  rpc multiply_block (ComputationRequest) returns (ComputationResult) {}
+  rpc add_block (ComputationRequest) returns (ComputationResult) {}
+}
+
+message ComputationRequest {
+  string matrix_1 = 1;
+  string matrix_2 = 2;
+}
+
+message ComputationResult {
+  string matrix = 1;
+}

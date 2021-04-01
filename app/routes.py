@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, render_template, request
 
+from app.client import run
+
 bp = Blueprint("main", __name__)
 
 
@@ -19,11 +21,7 @@ def multiply():
 
     matrix_1 = [[int(item) for item in row.split(",")] for row in matrix_1.split(";")]
     matrix_2 = [[int(item) for item in row.split(",")] for row in matrix_2.split(";")]
-    matrix_result = [[0 for _ in range(len(row))] for row in matrix_1]
 
-    for i in range(len(matrix_1)):
-        for j in range(len(matrix_2[0])):
-            for k in range(len(matrix_2)):
-                matrix_result[i][j] += matrix_1[i][k] * matrix_2[k][j]
+    matrix_result = run(matrix_1, matrix_2)
 
     return jsonify({"result": ";".join([",".join([str(item) for item in row]) for row in matrix_result])}), 200
