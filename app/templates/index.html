@@ -80,9 +80,11 @@
         let reader = new FileReader();
         reader.onload = function () {
             let lines = this.result.split('\n');
-            for (let line = 0; line < lines.length; line++) {
-                if (/^(?=.*\d)[\d ]+$/.test(lines[line].replace("\r", "")))
-                    matrix.push(lines[line].split(" "));
+            for (let line_no = 0; line_no < lines.length; line_no++) {
+                let row = lines[line_no].replace("\r", "");
+
+                if (/^(?=.*\d)[\d ]+$/.test(row))
+                    matrix.push(row.split(" "));
                 else {
                     matrix = [];
 
@@ -92,24 +94,21 @@
 
                     return;
                 }
-
-                let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
-
-                matrix.forEach(function (row) {
-                    console.log(row);
-                    table_html += `<tr>`;
-                    row.forEach(function (item) {
-                        table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
-                    })
-                    table_html += `</tr>`;
-                })
-
-                table_html += '</tbody></table>';
-                console.log(table_html);
-                console.log(table);
-
-                table.innerHTML = table_html;
             }
+
+            let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
+
+            matrix.forEach(function (row) {
+                table_html += `<tr>`;
+                row.forEach(function (item) {
+                    table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
+                })
+                table_html += `</tr>`;
+            });
+
+            table_html += '</tbody></table>';
+
+            table.innerHTML = table_html;
         };
 
         if (matrix_num === 1) {
@@ -131,27 +130,41 @@
             input_2.classList.remove("is-invalid");
             input_2.classList.add("is-valid");
         }
-
-        console.log(matrix_1);
-        console.log(matrix_2);
     }
 
     function calculate_matrix_multiplication() {
         let input_1 = document.querySelector("#input_file_1");
         let input_2 = document.querySelector("#input_file_2");
+        let valid = true;
 
         if (matrix_1.length === 0) {
             input_1.parentElement.querySelector("#input_1_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
             input_1.classList.remove("is-valid");
             input_1.classList.add("is-invalid");
+            valid = false;
         }
 
         if (matrix_2.length === 0) {
             input_2.parentElement.querySelector("#input_2_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
             input_2.classList.remove("is-valid");
             input_2.classList.add("is-invalid");
+            valid = false;
         }
 
+        if (!valid) return;
+
+        let form_data = new FormData();
+        form_data.append('matrix_1', matrix_1.map(e => e.join(',')).join(';'));
+        form_data.append('matrix_2', matrix_2.map(e => e.join(',')).join(';'));
+
+        fetch("{{ url_for("main.multiply") }}", {
+            method: "POST",
+            body: form_data
+        })
+            .then(response => response.json())
+            .then(function (data) {
+                console.log(data["result"]);
+            })
     }
 </script>
 </body>
