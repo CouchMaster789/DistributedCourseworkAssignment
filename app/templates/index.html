@@ -25,7 +25,7 @@
         </div>
     </section>
 
-    <section class="mt-5 text-center">
+    <section class="mt-5 text-center" id="input_section">
         <div class="row">
             <div class="col mb-3">
                 <label for="input_file_1" class="form-label fw-bold">File 1</label>
@@ -53,12 +53,20 @@
                 <div id="input_2_table_container"></div>
             </div>
         </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-primary btn-lg fw-bold fs-3" onclick="calculate_matrix_multiplication()">
+                Calculate
+            </button>
+        </div>
     </section>
 
-    <section class="text-center mt-4">
-        <button class="btn btn-primary btn-lg fw-bold fs-3" onclick="calculate_matrix_multiplication()">
-            Calculate
-        </button>
+    <section class="text-center mt-5 d-none" id="output_section">
+        <h3>Result!</h3>
+
+        <div id="output_table_container"></div>
+
+        <button class="btn btn-danger btn-lg fw-bold mt-4" onclick="window.location.reload();">Restart</button>
     </section>
 </div>
 
@@ -76,6 +84,8 @@
         let matrix;
         let input;
         let table;
+
+        {# TODO: ensure matrices are square #}
 
         let reader = new FileReader();
         reader.onload = function () {
@@ -96,19 +106,7 @@
                 }
             }
 
-            let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
-
-            matrix.forEach(function (row) {
-                table_html += `<tr>`;
-                row.forEach(function (item) {
-                    table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
-                })
-                table_html += `</tr>`;
-            });
-
-            table_html += '</tbody></table>';
-
-            table.innerHTML = table_html;
+            build_table(table, matrix);
         };
 
         if (matrix_num === 1) {
@@ -163,8 +161,26 @@
         })
             .then(response => response.json())
             .then(function (data) {
-                console.log(data["result"]);
+                document.querySelector("#input_section").classList.add("d-none");
+                build_table(document.querySelector("#output_table_container"), data["result"].split(";").map(e => e.split(",")));
+                document.querySelector("#output_section").classList.remove("d-none");
             })
+    }
+
+    function build_table(table, matrix_data) {
+        let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
+
+        matrix_data.forEach(function (row) {
+            table_html += `<tr>`;
+            row.forEach(function (item) {
+                table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
+            })
+            table_html += `</tr>`;
+        });
+
+        table_html += '</tbody></table>';
+
+        table.innerHTML = table_html;
     }
 </script>
 </body>
