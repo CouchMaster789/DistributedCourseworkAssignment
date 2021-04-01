@@ -37,17 +37,7 @@
                     Missing file! Please select a matrix file to multiply.
                 </div>
 
-                <table class="table table-bordered w-auto mx-auto mt-4 fw-bold">
-                    <tbody>
-                    {% for _ in range(4) %}
-                        <tr>
-                            {% for _ in range(4) %}
-                                <td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">1</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div id="input_1_table_container"></div>
             </div>
 
             <div class="col mb-3">
@@ -60,17 +50,7 @@
                     Missing file! Please select a matrix file to multiply.
                 </div>
 
-                <table class="table table-bordered w-auto mx-auto mt-4 fw-bold">
-                    <tbody>
-                    {% for _ in range(4) %}
-                        <tr>
-                            {% for _ in range(4) %}
-                                <td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">52</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div id="input_2_table_container"></div>
             </div>
         </div>
     </section>
@@ -94,15 +74,66 @@
         let input_1 = document.querySelector("#input_file_1");
         let input_2 = document.querySelector("#input_file_2");
         let matrix;
+        let input;
+        let table;
+
+        let reader = new FileReader();
+        reader.onload = function () {
+            let lines = this.result.split('\n');
+            for (let line = 0; line < lines.length; line++) {
+                if (/^(?=.*\d)[\d ]+$/.test(lines[line].replace("\r", "")))
+                    matrix.push(lines[line].split(" "));
+                else {
+                    matrix = [];
+
+                    input.parentElement.querySelector("#input_2_invalid_feedback").innerText = "File could not be parsed! Ensure file is structured correctly.";
+                    input.classList.remove("is-valid");
+                    input.classList.add("is-invalid");
+
+                    return;
+                }
+
+                let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
+
+                matrix.forEach(function (row) {
+                    console.log(row);
+                    table_html += `<tr>`;
+                    row.forEach(function (item) {
+                        table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
+                    })
+                    table_html += `</tr>`;
+                })
+
+                table_html += '</tbody></table>';
+                console.log(table_html);
+                console.log(table);
+
+                table.innerHTML = table_html;
+            }
+        };
 
         if (matrix_num === 1) {
-            console.log(input_1);
             matrix = matrix_1;
+            input = input_1;
+            table = document.querySelector("#input_1_table_container");
+
+            reader.readAsText(input_1.files[0]);
+
+            input_1.classList.remove("is-invalid");
+            input_1.classList.add("is-valid");
         } else {
-            console.log(input_2);
             matrix = matrix_2;
+            input = input_2;
+            table = document.querySelector("#input_2_table_container");
+
+            reader.readAsText(input_2.files[0]);
+
+            input_2.classList.remove("is-invalid");
+            input_2.classList.add("is-valid");
         }
 
+        console.log(matrix_1);
+        console.log(matrix_2);
     }
 
     function calculate_matrix_multiplication() {
@@ -111,12 +142,14 @@
 
         if (matrix_1.length === 0) {
             input_1.parentElement.querySelector("#input_1_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
-            input_1.classList.remove("is-valid")
-            input_1.classList.add("is-invalid")
+            input_1.classList.remove("is-valid");
+            input_1.classList.add("is-invalid");
+        }
 
+        if (matrix_2.length === 0) {
             input_2.parentElement.querySelector("#input_2_invalid_feedback").innerText = "Missing file! Please select a matrix file to multiply.";
-            input_2.classList.remove("is-valid")
-            input_2.classList.add("is-invalid")
+            input_2.classList.remove("is-valid");
+            input_2.classList.add("is-invalid");
         }
 
     }
