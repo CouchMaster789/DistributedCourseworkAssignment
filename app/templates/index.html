@@ -172,13 +172,47 @@
     function build_table(table, matrix_data) {
         let table_html = '<table class="table table-bordered w-auto mx-auto mt-4 fw-bold"><tbody>'
 
-        matrix_data.forEach(function (row) {
-            table_html += `<tr>`;
-            row.forEach(function (item) {
-                table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
-            })
-            table_html += `</tr>`;
-        });
+        if (matrix_data.length <= 5)
+            matrix_data.forEach(function (row) {
+                table_html += `<tr>`;
+                row.forEach(function (item) {
+                    table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${item}</td>`
+                })
+                table_html += `</tr>`;
+            });
+        else
+            for (let row = 0; row < 5; row++) {
+                table_html += `<tr>`;
+                if (row < 2 || row > 2)
+                    for (let col = 0; col < 5; col++) {
+                        let td;
+
+                        if (col === 2)
+                            td = '...';
+                        else {
+                            let row_addr;
+                            let col_addr;
+
+                            if (row > 2)
+                                row_addr = matrix_data.length - (5 - row);
+                            else
+                                row_addr = row;
+
+                            if (col > 2)
+                                col_addr = matrix_data.length - (5 - col);
+                            else
+                                col_addr = col;
+
+                            td = matrix_data[row_addr][col_addr];
+                        }
+
+                        table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">${td}</td>`;
+                    }
+                else
+                    for (let col = 0; col < 5; col++)
+                        table_html += `<td class="pt-4 fs-5" style="width: 4em !important; height: 4em;">...</td>`;
+                table_html += `</tr>`;
+            }
 
         table_html += '</tbody></table>';
 
