@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from app import matrix_computations_pb2 as matrix__computations__pb2
+import matrix_computations_pb2 as matrix__computations__pb2
 
 
 class ComputerStub(object):

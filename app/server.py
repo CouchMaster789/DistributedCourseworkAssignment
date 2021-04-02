@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 import grpc
 import numpy as np
@@ -11,6 +12,8 @@ from utils import decode_matrix, encode_matrix
 
 class Computer(matrix_computations_pb2_grpc.ComputerServicer):
     def multiply_block(self, request, context: grpc.aio.ServicerContext):
+        time.sleep(1)
+        print("running calculation....", time.time())
         result = np.matmul(decode_matrix(request.matrix_1), decode_matrix(request.matrix_2))
 
         return matrix_computations_pb2.ComputationResult(matrix=encode_matrix(result))
@@ -21,10 +24,10 @@ class Computer(matrix_computations_pb2_grpc.ComputerServicer):
         return matrix_computations_pb2.ComputationResult(matrix=encode_matrix(result))
 
 
-async def serve() -> None:
+async def serve(port=50052) -> None:
     server = grpc.aio.server()
     matrix_computations_pb2_grpc.add_ComputerServicer_to_server(Computer(), server)
-    listen_addr = '[::]:50052'
+    listen_addr = f'[::]:{port}'
     server.add_insecure_port(listen_addr)
     logging.info("Starting server on %s", listen_addr)
     await server.start()
@@ -39,4 +42,4 @@ async def serve() -> None:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(serve())
+    asyncio.run(serve(50053))
