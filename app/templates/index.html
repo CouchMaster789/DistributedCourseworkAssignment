@@ -109,6 +109,18 @@
                 }
             }
 
+            if (matrix.length !== matrix[0].length || (matrix.length & (matrix.length - 1)) !== 0) {
+                matrix = [];
+
+                input.parentElement.querySelector(".invalid-feedback").innerText = "Matrix must be square and its dimensions must be a power of 2!";
+                input.classList.remove("is-valid");
+                input.classList.add("is-invalid");
+
+                table.innerHTML = "";
+
+                return;
+            }
+
             build_table(table, matrix);
         };
 
