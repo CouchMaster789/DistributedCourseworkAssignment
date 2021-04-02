@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <div class="text-center mt-4">
+        <div class="text-center my-4">
             <button class="btn btn-primary btn-lg fw-bold fs-3" onclick="calculate_matrix_multiplication()">
                 Calculate
             </button>
@@ -110,7 +110,7 @@
         };
 
         if (matrix_num === 1) {
-            matrix = matrix_1;
+            matrix = matrix_1 = [];
             input = input_1;
             table = document.querySelector("#input_1_table_container");
 
@@ -119,7 +119,7 @@
             input_1.classList.remove("is-invalid");
             input_1.classList.add("is-valid");
         } else {
-            matrix = matrix_2;
+            matrix = matrix_2 = [];
             input = input_2;
             table = document.querySelector("#input_2_table_container");
 
