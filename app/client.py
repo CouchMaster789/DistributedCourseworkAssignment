@@ -1,9 +1,7 @@
 import asyncio
 import logging
-import time
 
 import grpc
-import numpy as np
 
 from app import matrix_computations_pb2, matrix_computations_pb2_grpc
 from app.utils import encode_matrix, decode_matrix
@@ -48,29 +46,29 @@ async def run(matrix_1, matrix_2):
             d1[i - b_size][j - b_size] = matrix_1[i][j]
             d2[i - b_size][j - b_size] = matrix_2[i][j]
 
-    async with grpc.aio.insecure_channel('localhost:50052') as channel1:
-        async with grpc.aio.insecure_channel('localhost:50053') as channel2:
-            print(time.time())
-            stub = matrix_computations_pb2_grpc.ComputerStub(channel1)
-            stub2 = matrix_computations_pb2_grpc.ComputerStub(channel2)
+    channels = [grpc.aio.insecure_channel(f'localhost:{port}') for port in range(50052, 50054)]
+    stubs = [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels]
 
-            a3_1, a3_2, b3_1, b3_2, c3_1, c3_2, d3_1, d3_2 = await asyncio.gather(
-                stub.multiply_block(prepare_data(a1, a2)),
-                stub.multiply_block(prepare_data(b1, c2)),
-                stub.multiply_block(prepare_data(a1, b2)),
-                stub.multiply_block(prepare_data(b1, d2)),
-                stub2.multiply_block(prepare_data(c1, a2)),
-                stub2.multiply_block(prepare_data(d1, c2)),
-                stub2.multiply_block(prepare_data(c1, b2)),
-                stub2.multiply_block(prepare_data(d1, d2))
-            )
+    a3_1, a3_2, b3_1, b3_2, c3_1, c3_2, d3_1, d3_2 = await asyncio.gather(
+        stubs[0].multiply_block(prepare_data(a1, a2)),
+        stubs[0].multiply_block(prepare_data(b1, c2)),
+        stubs[0].multiply_block(prepare_data(a1, b2)),
+        stubs[0].multiply_block(prepare_data(b1, d2)),
+        stubs[1].multiply_block(prepare_data(c1, a2)),
+        stubs[1].multiply_block(prepare_data(d1, c2)),
+        stubs[1].multiply_block(prepare_data(c1, b2)),
+        stubs[1].multiply_block(prepare_data(d1, d2))
+    )
 
-            print(time.time())
+    a3, b3, c3, d3 = await asyncio.gather(
+        stubs[0].add_block(prepare_data(decode_matrix(a3_1.matrix), decode_matrix(a3_2.matrix))),
+        stubs[0].add_block(prepare_data(decode_matrix(b3_1.matrix), decode_matrix(b3_2.matrix))),
+        stubs[1].add_block(prepare_data(decode_matrix(c3_1.matrix), decode_matrix(c3_2.matrix))),
+        stubs[1].add_block(prepare_data(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))),
+    )
 
-    a3 = np.add(decode_matrix(a3_1.matrix), decode_matrix(a3_2.matrix))
-    b3 = np.add(decode_matrix(b3_1.matrix), decode_matrix(b3_2.matrix))
-    c3 = np.add(decode_matrix(c3_1.matrix), decode_matrix(c3_2.matrix))
-    d3 = np.add(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))
+    a3, b3, c3, d3 = decode_matrix(a3.matrix), decode_matrix(b3.matrix), \
+                     decode_matrix(c3.matrix), decode_matrix(d3.matrix)
 
     for i in range(b_size):
         for j in range(b_size):
@@ -88,7 +86,8 @@ async def run(matrix_1, matrix_2):
         for j in range(b_size, matrix_length):
             result[i][j] = d3[i - b_size][j - b_size]
 
-        return result
+    print(result)
+    return result
 
 
 if __name__ == '__main__':
