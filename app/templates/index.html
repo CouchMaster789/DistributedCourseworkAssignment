@@ -98,9 +98,11 @@
                 else {
                     matrix = [];
 
-                    input.parentElement.querySelector("#input_2_invalid_feedback").innerText = "File could not be parsed! Ensure file is structured correctly.";
+                    input.parentElement.querySelector(".invalid-feedback").innerText = "File could not be parsed! Ensure file is structured correctly.";
                     input.classList.remove("is-valid");
                     input.classList.add("is-invalid");
+
+                    table.innerHTML = "";
 
                     return;
                 }
