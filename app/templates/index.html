@@ -167,6 +167,7 @@
                 build_table(document.querySelector("#output_table_container"), data["result"].split(";").map(e => e.split(",")));
                 document.querySelector("#output_section").classList.remove("d-none");
             })
+        {# TODO: add error handling #}
     }
 
     function build_table(table, matrix_data) {
@@ -215,6 +216,8 @@
             }
 
         table_html += '</tbody></table>';
+
+        table_html += `<span class="fw-bold">${matrix_data.length}x${matrix_data[0].length}</span>`;
 
         table.innerHTML = table_html;
     }

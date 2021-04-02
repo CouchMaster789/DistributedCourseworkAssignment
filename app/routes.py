@@ -23,6 +23,9 @@ def multiply():
     matrix_1 = [[int(item) for item in row.split(",")] for row in matrix_1.split(";")]
     matrix_2 = [[int(item) for item in row.split(",")] for row in matrix_2.split(";")]
 
-    matrix_result = async_to_sync(run)(matrix_1, matrix_2, deadline=0.1)
+    try:
+        matrix_result = async_to_sync(run)(matrix_1, matrix_2, deadline=1)
+    except:
+        return jsonify({"msg": "An error occurred when trying to multiply these matrices"}), 400
 
     return jsonify({"result": ";".join([",".join([str(item) for item in row]) for row in matrix_result])}), 200
