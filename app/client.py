@@ -8,43 +8,10 @@ from app.utils import encode_matrix, decode_matrix
 
 
 async def run(matrix_1, matrix_2):
-    prepare_data = lambda matrix_a, matrix_b: matrix_computations_pb2.ComputationRequest(
-        matrix_1=encode_matrix(matrix_a),
-        matrix_2=encode_matrix(matrix_b)
-    )
-
     matrix_length = len(matrix_1)
     b_size = 2
 
-    a1 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    a2 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    b1 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    b2 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    c1 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    c2 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    d1 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    d2 = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-    result = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
-
-    for i in range(b_size):
-        for j in range(b_size):
-            a1[i][j] = matrix_1[i][j]
-            a2[i][j] = matrix_2[i][j]
-
-    for i in range(b_size):
-        for j in range(b_size, matrix_length):
-            b1[i][j - b_size] = matrix_1[i][j]
-            b2[i][j - b_size] = matrix_2[i][j]
-
-    for i in range(b_size, matrix_length):
-        for j in range(b_size):
-            c1[i - b_size][j] = matrix_1[i][j]
-            c2[i - b_size][j] = matrix_2[i][j]
-
-    for i in range(b_size, matrix_length):
-        for j in range(b_size, matrix_length):
-            d1[i - b_size][j - b_size] = matrix_1[i][j]
-            d2[i - b_size][j - b_size] = matrix_2[i][j]
+    a1, a2, b1, b2, c1, c2, d1, d2 = get_matrix_partials(matrix_length, b_size, matrix_1, matrix_2)
 
     channels = [grpc.aio.insecure_channel(f'localhost:{port}') for port in range(50052, 50054)]
     stubs = [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels]
@@ -67,8 +34,46 @@ async def run(matrix_1, matrix_2):
         stubs[1].add_block(prepare_data(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))),
     )
 
-    a3, b3, c3, d3 = decode_matrix(a3.matrix), decode_matrix(b3.matrix), \
-                     decode_matrix(c3.matrix), decode_matrix(d3.matrix)
+    result = construct_result(matrix_length, b_size, decode_matrix(a3.matrix), decode_matrix(b3.matrix),
+                              decode_matrix(c3.matrix), decode_matrix(d3.matrix))
+
+    print(result)
+    return result
+
+
+def prepare_data(matrix_a, matrix_b):
+    return matrix_computations_pb2.ComputationRequest(matrix_1=encode_matrix(matrix_a),
+                                                      matrix_2=encode_matrix(matrix_b))
+
+
+def get_matrix_partials(matrix_length, b_size, matrix_1, matrix_2):
+    partials = [[[0 for _ in range(matrix_length)] for _ in range(matrix_length)] for _ in range(8)]
+
+    for i in range(b_size):
+        for j in range(b_size):
+            partials[0][i][j] = matrix_1[i][j]
+            partials[1][i][j] = matrix_2[i][j]
+
+    for i in range(b_size):
+        for j in range(b_size, matrix_length):
+            partials[2][i][j - b_size] = matrix_1[i][j]
+            partials[3][i][j - b_size] = matrix_2[i][j]
+
+    for i in range(b_size, matrix_length):
+        for j in range(b_size):
+            partials[4][i - b_size][j] = matrix_1[i][j]
+            partials[5][i - b_size][j] = matrix_2[i][j]
+
+    for i in range(b_size, matrix_length):
+        for j in range(b_size, matrix_length):
+            partials[6][i - b_size][j - b_size] = matrix_1[i][j]
+            partials[7][i - b_size][j - b_size] = matrix_2[i][j]
+
+    return partials
+
+
+def construct_result(matrix_length, b_size, a3, b3, c3, d3):
+    result = [[0 for _ in range(matrix_length)] for _ in range(matrix_length)]
 
     for i in range(b_size):
         for j in range(b_size):
@@ -86,7 +91,6 @@ async def run(matrix_1, matrix_2):
         for j in range(b_size, matrix_length):
             result[i][j] = d3[i - b_size][j - b_size]
 
-    print(result)
     return result
 
 
