@@ -5,7 +5,8 @@ import time
 
 import grpc
 
-from app import matrix_computations_pb2, matrix_computations_pb2_grpc
+import matrix_computations_pb2_grpc
+import matrix_computations_pb2
 from app.utils import encode_matrix, decode_matrix
 
 

@@ -8,6 +8,7 @@ flask = "*"
 grpcio = "*"
 numpy = "*"
 codetiming = "*"
+asgiref = "*"
 
 [dev-packages]
 

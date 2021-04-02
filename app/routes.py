@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from flask import Blueprint, jsonify, render_template, request
 
 from app.client import run
@@ -22,6 +23,6 @@ def multiply():
     matrix_1 = [[int(item) for item in row.split(",")] for row in matrix_1.split(";")]
     matrix_2 = [[int(item) for item in row.split(",")] for row in matrix_2.split(";")]
 
-    matrix_result = run(matrix_1, matrix_2)
+    matrix_result = async_to_sync(run)(matrix_1, matrix_2)
 
     return jsonify({"result": ";".join([",".join([str(item) for item in row]) for row in matrix_result])}), 200
