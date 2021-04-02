@@ -33,6 +33,7 @@ async def run(matrix_1, matrix_2, deadline=1, starting_port=50052):
                  range(starting_port + 1, starting_port + servers_needed)]
     stubs += [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels[1:]]
 
+    # distribute the operations across all available server stubs
     a3_2, b3_1, b3_2, c3_1, c3_2, d3_1, d3_2 = await asyncio.gather(
         stubs[0 % servers_needed].multiply_block(prepare_data(b1, c2)),
         stubs[1 % servers_needed].multiply_block(prepare_data(a1, b2)),
