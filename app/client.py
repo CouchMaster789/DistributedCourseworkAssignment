@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import math
+import time
 
 import grpc
 
@@ -7,37 +9,49 @@ from app import matrix_computations_pb2, matrix_computations_pb2_grpc
 from app.utils import encode_matrix, decode_matrix
 
 
-async def run(matrix_1, matrix_2):
+async def run(matrix_1, matrix_2, deadline=1, starting_port=50052):
     matrix_length = len(matrix_1)
     b_size = 2
 
     a1, a2, b1, b2, c1, c2, d1, d2 = get_matrix_partials(matrix_length, b_size, matrix_1, matrix_2)
 
-    channels = [grpc.aio.insecure_channel(f'localhost:{port}') for port in range(50052, 50054)]
-    stubs = [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels]
+    # create one starting channel (and stub)
+    channels = [grpc.aio.insecure_channel(f'localhost:{starting_port}')]
+    stubs = [matrix_computations_pb2_grpc.ComputerStub(channels[0])]
 
-    a3_1, a3_2, b3_1, b3_2, c3_1, c3_2, d3_1, d3_2 = await asyncio.gather(
-        stubs[0].multiply_block(prepare_data(a1, a2)),
-        stubs[0].multiply_block(prepare_data(b1, c2)),
-        stubs[0].multiply_block(prepare_data(a1, b2)),
-        stubs[0].multiply_block(prepare_data(b1, d2)),
-        stubs[1].multiply_block(prepare_data(c1, a2)),
-        stubs[1].multiply_block(prepare_data(d1, c2)),
-        stubs[1].multiply_block(prepare_data(c1, b2)),
-        stubs[1].multiply_block(prepare_data(d1, d2))
+    # calculate servers needed (by processing one operation)
+    start = time.time()
+    a3_1 = await stubs[0].multiply_block(prepare_data(a1, a2))
+    duration = time.time() - start
+
+    # duration of 1 operation multiplied by number of operations remaining plus 1 second for padding, maxing out at 8
+    servers_needed = min(math.ceil((duration * 11) + 1 / deadline), 8)
+
+    # create any extra channels (and stubs) necessary
+    channels += [grpc.aio.insecure_channel(f'localhost:{port}') for port in
+                 range(starting_port + 1, starting_port + servers_needed)]
+    stubs += [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels[1:]]
+
+    a3_2, b3_1, b3_2, c3_1, c3_2, d3_1, d3_2 = await asyncio.gather(
+        stubs[0 % servers_needed].multiply_block(prepare_data(b1, c2)),
+        stubs[1 % servers_needed].multiply_block(prepare_data(a1, b2)),
+        stubs[2 % servers_needed].multiply_block(prepare_data(b1, d2)),
+        stubs[3 % servers_needed].multiply_block(prepare_data(c1, a2)),
+        stubs[4 % servers_needed].multiply_block(prepare_data(d1, c2)),
+        stubs[5 % servers_needed].multiply_block(prepare_data(c1, b2)),
+        stubs[6 % servers_needed].multiply_block(prepare_data(d1, d2))
     )
 
     a3, b3, c3, d3 = await asyncio.gather(
-        stubs[0].add_block(prepare_data(decode_matrix(a3_1.matrix), decode_matrix(a3_2.matrix))),
-        stubs[0].add_block(prepare_data(decode_matrix(b3_1.matrix), decode_matrix(b3_2.matrix))),
-        stubs[1].add_block(prepare_data(decode_matrix(c3_1.matrix), decode_matrix(c3_2.matrix))),
-        stubs[1].add_block(prepare_data(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))),
+        stubs[0 % servers_needed].add_block(prepare_data(decode_matrix(a3_1.matrix), decode_matrix(a3_2.matrix))),
+        stubs[1 % servers_needed].add_block(prepare_data(decode_matrix(b3_1.matrix), decode_matrix(b3_2.matrix))),
+        stubs[2 % servers_needed].add_block(prepare_data(decode_matrix(c3_1.matrix), decode_matrix(c3_2.matrix))),
+        stubs[3 % servers_needed].add_block(prepare_data(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))),
     )
 
     result = construct_result(matrix_length, b_size, decode_matrix(a3.matrix), decode_matrix(b3.matrix),
                               decode_matrix(c3.matrix), decode_matrix(d3.matrix))
 
-    print(result)
     return result
 
 
