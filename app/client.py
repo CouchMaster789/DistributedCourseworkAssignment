@@ -7,7 +7,7 @@ import grpc
 
 import matrix_computations_pb2_grpc
 import matrix_computations_pb2
-from app.utils import encode_matrix, decode_matrix
+from app.utils import encode_matrix, decode_matrix, GRPC_OPTIONS
 
 
 async def run(matrix_1, matrix_2, deadline=1, starting_port=50052):
@@ -17,7 +17,7 @@ async def run(matrix_1, matrix_2, deadline=1, starting_port=50052):
     a1, a2, b1, b2, c1, c2, d1, d2 = get_matrix_partials(matrix_length, b_size, matrix_1, matrix_2)
 
     # create one starting channel (and stub)
-    channels = [grpc.aio.insecure_channel(f'localhost:{starting_port}')]
+    channels = [grpc.aio.insecure_channel(f'localhost:{starting_port}', options=GRPC_OPTIONS)]
     stubs = [matrix_computations_pb2_grpc.ComputerStub(channels[0])]
 
     # calculate servers needed (by processing one operation)
@@ -29,8 +29,9 @@ async def run(matrix_1, matrix_2, deadline=1, starting_port=50052):
     servers_needed = min(math.ceil((duration * 11) + 1 / deadline), 8)
 
     # create any extra channels (and stubs) necessary
-    channels += [grpc.aio.insecure_channel(f'localhost:{port}') for port in
-                 range(starting_port + 1, starting_port + servers_needed)]
+    channels += [
+        grpc.aio.insecure_channel(f'localhost:{port}', options=GRPC_OPTIONS) for port in
+        range(starting_port + 1, starting_port + servers_needed)]
     stubs += [matrix_computations_pb2_grpc.ComputerStub(channel) for channel in channels[1:]]
 
     # distribute the operations across all available server stubs

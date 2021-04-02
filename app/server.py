@@ -8,7 +8,7 @@ import numpy as np
 
 import matrix_computations_pb2
 import matrix_computations_pb2_grpc
-from app.utils import decode_matrix, encode_matrix
+from app.utils import decode_matrix, encode_matrix, GRPC_OPTIONS
 
 logger = logging.getLogger("main")
 
@@ -26,7 +26,8 @@ class Computer(matrix_computations_pb2_grpc.ComputerServicer):
 
         result = np.matmul(decode_matrix(request.matrix_1), decode_matrix(request.matrix_2))
 
-        logger.info(f"port {self.port_id} has completed a multiplication operation in {time.time() - start:.03} seconds!")
+        logger.info(
+            f"port {self.port_id} has completed a multiplication operation in {time.time() - start:.03} seconds!")
 
         return matrix_computations_pb2.ComputationResult(matrix=encode_matrix(result))
 
@@ -42,7 +43,7 @@ class Computer(matrix_computations_pb2_grpc.ComputerServicer):
 
 
 async def serve(port) -> None:
-    server = grpc.aio.server()
+    server = grpc.aio.server(options=GRPC_OPTIONS)
     matrix_computations_pb2_grpc.add_ComputerServicer_to_server(Computer(port_id=port), server)
     listen_addr = f'[::]:{port}'
     server.add_insecure_port(listen_addr)
