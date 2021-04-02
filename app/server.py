@@ -1,5 +1,5 @@
+import asyncio
 import logging
-from concurrent import futures
 
 import grpc
 import numpy as np
@@ -10,25 +10,33 @@ from utils import decode_matrix, encode_matrix
 
 
 class Computer(matrix_computations_pb2_grpc.ComputerServicer):
-    def multiply_block(self, request, context):
+    def multiply_block(self, request, context: grpc.aio.ServicerContext):
         result = np.matmul(decode_matrix(request.matrix_1), decode_matrix(request.matrix_2))
 
         return matrix_computations_pb2.ComputationResult(matrix=encode_matrix(result))
 
-    def add_block(self, request, context):
+    def add_block(self, request, context: grpc.aio.ServicerContext):
         result = np.add(decode_matrix(request.matrix_1), decode_matrix(request.matrix_2))
 
         return matrix_computations_pb2.ComputationResult(matrix=encode_matrix(result))
 
 
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+async def serve() -> None:
+    server = grpc.aio.server()
     matrix_computations_pb2_grpc.add_ComputerServicer_to_server(Computer(), server)
-    server.add_insecure_port('[::]:50052')
-    server.start()
-    server.wait_for_termination()
+    listen_addr = '[::]:50052'
+    server.add_insecure_port(listen_addr)
+    logging.info("Starting server on %s", listen_addr)
+    await server.start()
+    try:
+        await server.wait_for_termination()
+    except KeyboardInterrupt:
+        # Shuts down the server with 0 seconds of grace period. During the
+        # grace period, the server won't accept new connections and allow
+        # existing RPCs to continue within the grace period.
+        await server.stop(0)
 
 
 if __name__ == '__main__':
-    logging.basicConfig()
-    serve()
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(serve())

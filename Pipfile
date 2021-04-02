@@ -7,6 +7,7 @@ name = "pypi"
 flask = "*"
 grpcio = "*"
 numpy = "*"
+codetiming = "*"
 
 [dev-packages]
 

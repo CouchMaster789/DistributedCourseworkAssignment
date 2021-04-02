@@ -1,24 +1,21 @@
-from __future__ import print_function
-
+import asyncio
 import logging
 
 import grpc
+import numpy as np
+
 from app import matrix_computations_pb2, matrix_computations_pb2_grpc
 from app.utils import encode_matrix, decode_matrix
 
 
-def run(matrix_1, matrix_2):
-    with grpc.insecure_channel('localhost:50052') as channel:
+async def run(matrix_1, matrix_2):
+    async with grpc.aio.insecure_channel('localhost:50052') as channel:
         stub = matrix_computations_pb2_grpc.ComputerStub(channel)
 
-        multiply_block = lambda matrix_a, matrix_b: decode_matrix(
-            stub.multiply_block(matrix_computations_pb2.ComputationRequest(
-                matrix_1=encode_matrix(matrix_a), matrix_2=encode_matrix(matrix_b))
-            ).matrix)
-
-        add_block = lambda matrix_a, matrix_b: decode_matrix(stub.add_block(matrix_computations_pb2.ComputationRequest(
-            matrix_1=encode_matrix(matrix_a), matrix_2=encode_matrix(matrix_b)
-        )).matrix)
+        prepare_data = lambda matrix_a, matrix_b: matrix_computations_pb2.ComputationRequest(
+            matrix_1=encode_matrix(matrix_a),
+            matrix_2=encode_matrix(matrix_b)
+        )
 
         matrix_length = len(matrix_1)
         b_size = 2
@@ -53,10 +50,22 @@ def run(matrix_1, matrix_2):
                 d1[i - b_size][j - b_size] = matrix_1[i][j]
                 d2[i - b_size][j - b_size] = matrix_2[i][j]
 
-        a3 = add_block(multiply_block(a1, a2), multiply_block(b1, c2))
-        b3 = add_block(multiply_block(a1, b2), multiply_block(b1, d2))
-        c3 = add_block(multiply_block(c1, a2), multiply_block(d1, c2))
-        d3 = add_block(multiply_block(c1, b2), multiply_block(d1, d2))
+        a3_1 = await stub.multiply_block(prepare_data(a1, a2))
+        a3_2 = await stub.multiply_block(prepare_data(b1, c2))
+        a3 = np.add(decode_matrix(a3_1.matrix), decode_matrix(a3_2.matrix))
+
+        b3_1 = await stub.multiply_block(prepare_data(a1, b2))
+        b3_2 = await stub.multiply_block(prepare_data(b1, d2))
+        b3 = np.add(decode_matrix(b3_1.matrix), decode_matrix(b3_2.matrix))
+
+        c3_1 = await stub.multiply_block(prepare_data(c1, a2))
+        c3_2 = await stub.multiply_block(prepare_data(d1, c2))
+        c3 = np.add(decode_matrix(c3_1.matrix), decode_matrix(c3_2.matrix))
+
+        d3_1 = await stub.multiply_block(prepare_data(c1, b2))
+        d3_2 = await stub.multiply_block(prepare_data(d1, d2))
+        d3 = np.add(decode_matrix(d3_1.matrix), decode_matrix(d3_2.matrix))
+        # d3 = stub.add_block(prepare_data(d3_1.matrix, d3_2.matrix)).matrix
 
         for i in range(b_size):
             for j in range(b_size):
@@ -79,12 +88,11 @@ def run(matrix_1, matrix_2):
 
 if __name__ == '__main__':
     logging.basicConfig()
-    run([[1, 2, 3, 4],
-         [5, 6, 7, 8],
-         [9, 10, 11, 12],
-         [13, 14, 15, 16]],
-
-        [[1, 2, 3, 4],
-         [5, 6, 7, 8],
-         [9, 10, 11, 12],
-         [13, 14, 15, 16]])
+    asyncio.run(run([[1, 2, 3, 4],
+                     [5, 6, 7, 8],
+                     [9, 10, 11, 12],
+                     [13, 14, 15, 16]],
+                    [[1, 2, 3, 4],
+                     [5, 6, 7, 8],
+                     [9, 10, 11, 12],
+                     [13, 14, 15, 16]]))
